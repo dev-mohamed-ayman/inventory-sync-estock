@@ -80,6 +80,7 @@ SELECT
     '' AS image
 FROM Products p
 LEFT JOIN Product_Amount pa ON p.product_id = pa.product_id
+WHERE p.deleted != 'Y' OR p.deleted IS NULL
 GROUP BY p.product_id, p.product_code, p.product_name_en, p.product_name_ar, p.sell_price, p.product_int_code
 "@
 
@@ -118,7 +119,7 @@ GROUP BY p.product_id, p.product_code, p.product_name_en, p.product_name_ar, p.s
                 code = $ProductCode
                 name = $ProductName
                 price = [double]$Row.price
-                quantity = [double]$Row.quantity
+                quantity = [int][Math]::Floor([double]$Row.quantity)
                 international_barcode = if ($Row.international_barcode -ne [DBNull]::Value) { $Row.international_barcode.ToString().Trim() } else { "" }
                 image = if ($Row.image -ne [DBNull]::Value) { $Row.image.ToString().Trim() } else { "" }
             }
@@ -132,7 +133,7 @@ GROUP BY p.product_id, p.product_code, p.product_name_en, p.product_name_ar, p.s
         Write-Log "Splitting into $TotalBatches batches of $BatchSize products each..."
         
         $Headers = @{
-            "X-API-KEY" = $Config.apiKey
+            "Authorization" = "Bearer $($Config.apiKey)"
             "Content-Type" = "application/json"
         }
         
