@@ -133,7 +133,7 @@ GROUP BY p.product_id, p.product_code, p.product_name_en, p.product_name_ar, p.s
         Write-Log "Splitting into $TotalBatches batches of $BatchSize products each..."
         
         $Headers = @{
-            "Authorization" = "Bearer $($Config.apiKey)"
+            "X-API-KEY" = $Config.apiKey
             "Content-Type" = "application/json"
         }
         
