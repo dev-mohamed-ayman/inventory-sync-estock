@@ -123,41 +123,59 @@ GROUP BY p.product_id, p.product_code, p.product_name_en, p.product_name_ar, p.s
         }
 
         Write-Log "Number Of Products After Filtering: $($ProductsList.Count)"
-        Write-Log "Preparing JSON payload..."
-
-        $PayloadObject = @{
-            products = $ProductsList
-        }
-        $Payload = $PayloadObject | ConvertTo-Json -Depth 10
         
-        Write-Log "Payload size: $($Payload.Length) characters"
-        Write-Log "First 500 chars of payload: $($Payload.Substring(0, [Math]::Min(500, $Payload.Length)))"
-
-        Write-Log "Sending data to API: $($Config.apiUrl)..."
+        $BatchSize = 500
+        $TotalBatches = [Math]::Ceiling($ProductsList.Count / $BatchSize)
+        Write-Log "Splitting into $TotalBatches batches of $BatchSize products each..."
         
         $Headers = @{
             "X-API-KEY" = $Config.apiKey
             "Content-Type" = "application/json"
         }
-
-        try {
-            $BodyBytes = [System.Text.Encoding]::UTF8.GetBytes($Payload)
-            $Response = Invoke-RestMethod -Uri $Config.apiUrl -Method Post -Headers $Headers -Body $BodyBytes -TimeoutSec $Config.requestTimeoutSeconds
+        
+        $SuccessCount = 0
+        $FailedCount = 0
+        
+        for ($i = 0; $i -lt $TotalBatches; $i++) {
+            $Start = $i * $BatchSize
+            $End = [Math]::Min(($i + 1) * $BatchSize - 1, $ProductsList.Count - 1)
+            $Batch = $ProductsList[$Start..$End]
             
-            Write-Log "Number Of Products Sent: $($ProductsList.Count)"
-            Write-Log "HTTP Status Code: 200 (Assumed SUCCESS)"
-            Write-Log "API Response: $($Response | ConvertTo-Json -Compress)"
-        } catch {
-            $StatusCode = if ($_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { 0 }
-            Write-Log "HTTP Status Code: $StatusCode" -Level "ERROR"
-            Write-Log "API Error: $($_.Exception.Message)" -Level "ERROR"
+            Write-Log "Processing Batch $($i + 1)/$TotalBatches ($($Batch.Count) products)..."
             
-            if ($_.Exception.Response) {
-                $Reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
-                $ErrorResponse = $Reader.ReadToEnd()
-                Write-Log "API Error Response: $ErrorResponse" -Level "ERROR"
+            $PayloadObject = @{
+                products = $Batch
             }
-            throw $_
+            $Payload = $PayloadObject | ConvertTo-Json -Depth 10
+            $BodyBytes = [System.Text.Encoding]::UTF8.GetBytes($Payload)
+            
+            try {
+                Write-Log "Sending Batch $($i + 1) to API..."
+                $Response = Invoke-RestMethod -Uri $Config.apiUrl -Method Post -Headers $Headers -Body $BodyBytes -TimeoutSec $Config.requestTimeoutSeconds
+                
+                Write-Log "Batch $($i + 1) SUCCESS"
+                Write-Log "API Response: $($Response | ConvertTo-Json -Compress)"
+                $SuccessCount += $Batch.Count
+            } catch {
+                $StatusCode = if ($_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { 0 }
+                Write-Log "Batch $($i + 1) FAILED - HTTP Status Code: $StatusCode" -Level "ERROR"
+                Write-Log "API Error: $($_.Exception.Message)" -Level "ERROR"
+                
+                if ($_.Exception.Response) {
+                    $Reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+                    $ErrorResponse = $Reader.ReadToEnd()
+                    Write-Log "API Error Response: $ErrorResponse" -Level "ERROR"
+                }
+                $FailedCount += $Batch.Count
+            }
+            
+            # Small delay between batches to avoid overwhelming the server
+            Start-Sleep -Milliseconds 500
+        }
+        
+        Write-Log "Sync Summary: Successfully sent $SuccessCount products, Failed: $FailedCount"
+        if ($FailedCount -gt 0) {
+            Write-Log "Some batches failed. Check logs above for details." -Level "WARNING"
         }
     }
 
