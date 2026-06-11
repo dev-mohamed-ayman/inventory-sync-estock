@@ -1,0 +1,31 @@
+﻿[2026-06-11 13:27:55] [INFO] Starting Pharmacy Inventory Sync Agent...
+[2026-06-11 13:27:55] [INFO] Configuration loaded successfully.
+[2026-06-11 13:27:55] [INFO] Connecting to SQL Server: .\SQLEXPRESS...
+[2026-06-11 13:27:55] [INFO] Using Windows Authentication (Integrated Security).
+[2026-06-11 13:27:55] [INFO] SQL Connection Status: SUCCESS
+[2026-06-11 13:27:55] [INFO] Loading products and calculating stock...
+[2026-06-11 13:27:55] [INFO] Number Of Products Loaded: 30250
+[2026-06-11 13:27:55] [INFO] Preparing data for API...
+[2026-06-11 13:27:58] [INFO] Number Of Products After Filtering: 30250
+[2026-06-11 13:27:58] [INFO] Preparing JSON payload...
+[2026-06-11 13:27:58] [INFO] Payload size: 10386020 characters
+[2026-06-11 13:27:58] [INFO] First 500 chars of payload: {
+    "products":  [
+                     {
+                         "name":  "123 20 tab",
+                         "code":  "1",
+                         "international_barcode":  "",
+                         "quantity":  5,
+                         "price":  15,
+                         "image":  ""
+                     },
+                     {
+                         "name":  "123  120ML  SYRUP",
+                         "code":  "2",
+                         "international_ba
+[2026-06-11 13:27:58] [INFO] Sending data to API: https://max-pharmacy.bya3online.com/api/v1/pharmacy/sync...
+[2026-06-11 13:30:11] [ERROR] HTTP Status Code: 524
+[2026-06-11 13:30:11] [ERROR] API Error: The remote server returned an error: (524) <none>.
+[2026-06-11 13:30:11] [ERROR] API Error Response: 
+[2026-06-11 13:30:11] [ERROR] CRITICAL ERROR: The remote server returned an error: (524) <none>.
+[2026-06-11 13:30:11] [ERROR] Full Exception Stack Trace: at <ScriptBlock>, C:\Users\Mohamed Ayman\OneDrive\Desktop\New folder (4)\InventorySync\SyncInventory.ps1: line 145
