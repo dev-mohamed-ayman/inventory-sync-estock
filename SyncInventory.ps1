@@ -80,7 +80,7 @@ SELECT
     '' AS image
 FROM Products p
 LEFT JOIN Product_Amount pa ON p.product_id = pa.product_id
-WHERE p.deleted != 'Y' OR p.deleted IS NULL
+WHERE ISNULL(p.deleted, 'N') != 'Y'
 GROUP BY p.product_id, p.product_code, p.product_name_en, p.product_name_ar, p.sell_price, p.product_int_code
 "@
 
