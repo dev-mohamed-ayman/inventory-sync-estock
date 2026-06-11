@@ -2,6 +2,9 @@
 # Created for: Max Pharmacy
 # Version: 1.0.0
 
+# Force TLS 1.2+ for SSL/TLS connections (fix for "Could not create SSL/TLS secure channel" error)
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+
 $PSScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $ConfigFile = Join-Path $PSScriptRoot "config.json"
 $LogFile = Join-Path $PSScriptRoot "logs\sync.log"
