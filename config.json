@@ -3,8 +3,8 @@
   "database": "stock",
   "username": "",
   "password": "",
-  "apiUrl": "https://max-pharmacy.bya3online.com/api/v1/pharmacy/sync",
-  "apiKey": "Pharmacy-Sync-Static-Key-2024",
-  "syncIntervalMinutes": 120,
+  "apiUrl": "https://alsaftypharmacies.online/api/v1/pharmacy/sync",
+  "apiKey": "eyJhbGciOiJIUzI1NiJ9.test_payload.d8K2mN5pQ7xR4vT9yW1z",
+  "syncIntervalMinutes": 60,
   "requestTimeoutSeconds": 300
 }
