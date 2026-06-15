@@ -73,7 +73,8 @@ try {
 SELECT 
     p.product_id,
     p.product_code AS code,
-    COALESCE(p.product_name_en, p.product_name_ar) AS name,
+    p.product_name_ar AS name_ar,
+    p.product_name_en AS name_en,
     CAST(p.sell_price AS FLOAT) AS price,
     ISNULL(SUM(CAST(pa.amount AS FLOAT)), 0) AS quantity,
     p.product_int_code AS international_barcode,
@@ -81,7 +82,7 @@ SELECT
 FROM Products p
 LEFT JOIN Product_Amount pa ON p.product_id = pa.product_id
 WHERE ISNULL(p.deleted, 'N') != 'Y'
-GROUP BY p.product_id, p.product_code, p.product_name_en, p.product_name_ar, p.sell_price, p.product_int_code
+GROUP BY p.product_id, p.product_code, p.product_name_ar, p.product_name_en, p.sell_price, p.product_int_code
 "@
 
     $Command = $Connection.CreateCommand()
@@ -102,13 +103,9 @@ GROUP BY p.product_id, p.product_code, p.product_name_en, p.product_name_ar, p.s
         $ProductsList = New-Object System.Collections.Generic.List[Object]
         foreach ($Row in $DataTable.Rows) {
             $ProductCode = if ($Row.code -ne [DBNull]::Value) { $Row.code.ToString().Trim() } else { "" }
-            $ProductName = if ($Row.name -ne [DBNull]::Value) { $Row.name.ToString().Trim() } else { "" }
+            $ProductNameAr = if ($Row.name_ar -ne [DBNull]::Value) { $Row.name_ar.ToString().Trim() } else { "" }
+            $ProductNameEn = if ($Row.name_en -ne [DBNull]::Value) { $Row.name_en.ToString().Trim() } else { "" }
             
-            # API requires a name. Fallback to code if name is missing.
-            if ([string]::IsNullOrWhiteSpace($ProductName)) {
-                $ProductName = "Product " + $ProductCode
-            }
-
             # Skip product if it has no code (API usually requires a unique identifier)
             if ([string]::IsNullOrWhiteSpace($ProductCode)) {
                 Write-Log "Skipping product without code (ID: $($Row.product_id))" -Level "WARNING"
@@ -117,12 +114,27 @@ GROUP BY p.product_id, p.product_code, p.product_name_en, p.product_name_ar, p.s
 
             $Product = @{
                 code = $ProductCode
-                name = $ProductName
                 price = [double]$Row.price
                 quantity = [int][Math]::Floor([double]$Row.quantity)
                 international_barcode = if ($Row.international_barcode -ne [DBNull]::Value) { $Row.international_barcode.ToString().Trim() } else { "" }
                 image = if ($Row.image -ne [DBNull]::Value) { $Row.image.ToString().Trim() } else { "" }
             }
+            
+            # Add name_ar if it's not empty
+            if (-not [string]::IsNullOrWhiteSpace($ProductNameAr)) {
+                $Product["name_ar"] = $ProductNameAr
+            }
+            
+            # Add name_en if it's not empty
+            if (-not [string]::IsNullOrWhiteSpace($ProductNameEn)) {
+                $Product["name_en"] = $ProductNameEn
+            }
+            
+            # If both names are empty, use code as fallback for one of them
+            if ([string]::IsNullOrWhiteSpace($ProductNameAr) -and [string]::IsNullOrWhiteSpace($ProductNameEn)) {
+                $Product["name_en"] = "Product " + $ProductCode
+            }
+            
             $ProductsList.Add($Product)
         }
 
