@@ -5,6 +5,6 @@
   "password": "",
   "apiUrl": "https://alsaftypharmacies.online/api/v1/pharmacy/sync",
   "apiKey": "eyJhbGciOiJIUzI1NiJ9.test_payload.d8K2mN5pQ7xR4vT9yW1z",
-  "syncIntervalMinutes": 60,
+  "syncIntervalMinutes": 40,
   "requestTimeoutSeconds": 300
 }
